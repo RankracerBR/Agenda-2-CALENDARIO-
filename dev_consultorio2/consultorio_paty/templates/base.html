@@ -1,0 +1,116 @@
+{% load static %}
+<html>
+<head>
+    <title>Calendário Consultório</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">     
+    <link rel="stylesheet" href="{% static 'css/style.css'%}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.js"></script>
+</head>
+<body>
+<div class="container">
+ <div class="row">
+    <h4>Consultas do Consultório</h4> 
+    {% block content %}{% endblock %}
+ </div>
+</div>
+<script>
+   $(document).ready(function () {
+       var calendar = $('#calendar').fullCalendar({
+           header: {
+               left: 'prev,next today',
+               center: 'title',
+               right: 'month,agendaWeek,agendaDay'
+           },
+           events: '/all_events',
+           selectable: true,
+           selectHelper: true,
+           editable: true,
+           eventLimit: true,
+           select: function (start, end, allDay) {
+               var title = prompt("Digite o nome da consulta:");
+               if (title) {
+                   var start = $.fullCalendar.formatDate(start, "Y-MM-DD HH:mm:ss");
+                   var end = $.fullCalendar.formatDate(end, "Y-MM-DD HH:mm:ss");
+                   $.ajax({
+                       type: "GET",
+                       url: '/add_event',
+                       data: {'title': title, 'start': start, 'end': end},
+                       dataType: "json",
+                       success: function (data) {
+                           calendar.fullCalendar('refetchEvents');
+                           alert("Consulta adicionada com  sucesso");
+                       },
+                       error: function (data) {
+                           alert('Houve um problema ao registra a consulta!!!');
+                       }
+                   });
+               }
+           },
+           eventResize: function (event) {
+               var start = $.fullCalendar.formatDate(event.start, "Y-MM-DD HH:mm:ss");
+               var end = $.fullCalendar.formatDate(event.end, "Y-MM-DD HH:mm:ss");
+               var title = event.title;
+               var id = event.id;
+               $.ajax({
+                   type: "GET",
+                   url: '/update',
+                   data: {'title': title, 'start': start, 'end': end, 'id': id},
+                   dataType: "json",
+                   success: function (data) {
+                       calendar.fullCalendar('refetchEvents');
+                       alert('Consulta Alterada');
+                   },
+                   error: function (data) {
+                       alert('Houve um problema ao alterar a consulta!!!');
+                   }
+               });
+           },
+ 
+           eventDrop: function (event) {
+               var start = $.fullCalendar.formatDate(event.start, "Y-MM-DD HH:mm:ss");
+               var end = $.fullCalendar.formatDate(event.end, "Y-MM-DD HH:mm:ss");
+               var title = event.title;
+               var id = event.id;
+               $.ajax({
+                   type: "GET",
+                   url: '/update',
+                   data: {'title': title, 'start': start, 'end': end, 'id': id},
+                   dataType: "json",
+                   success: function (data) {
+                       calendar.fullCalendar('refetchEvents');
+                       alert('Consulta Alterarda');
+                   },
+                   error: function (data) {
+                       alert('Ocorreu um Problema na alteração!!!');
+                   }
+               });
+           },
+ 
+           eventClick: function (event) {
+               if (confirm("Tem certeza de que quer remover a consulta?")) {
+                   var id = event.id;
+                   $.ajax({
+                       type: "GET",
+                       url: '/remove',
+                       data: {'id': id},
+                       dataType: "json",
+                       success: function (data) {
+                           calendar.fullCalendar('refetchEvents');
+                           alert('Consulta Removida');
+                       },
+                       error: function (data) {
+                           alert('Houve um erro ao deletar a Consulta!!!');
+                       }
+                   });
+               }
+           },
+ 
+       });
+   });
+ 
+</script>
+</body>
+</html>
